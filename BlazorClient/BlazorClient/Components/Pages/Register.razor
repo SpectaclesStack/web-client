@@ -1,0 +1,207 @@
+@page "/register"
+@using System.Net
+@attribute [StreamRendering]
+
+<PageTitle>Register</PageTitle>
+
+<h1>Register</h1>
+
+@if (tokenfound == null)
+{
+    <div>Please go to <a href="@verifylink" target="_blank">github registration</a> and enter the code: @devicecode</div>
+    //tokenfound =  
+
+    bool result = false;
+
+    @while(!result){
+        var checkfortoken =  getAccessToken(devicecode);
+        Console.WriteLine("Printing access token response");
+        Console.WriteLine(checkfortoken);
+        if(!checkfortoken.Equals("ACCESS_TOKEN")){
+            
+            result = true;
+        }
+    }
+
+    @if(result ){
+        <div>Registration Successful</div>
+    }
+}
+else
+{
+    @if(!getAccessToken(devicecode ?? "NOT_FOUND").Equals("NOT_FOUND")){
+        <div>Registration Successful</div>
+    }
+
+}
+
+@code {
+
+        private string? tokenfound;
+        private string? verifylink;
+
+        private string? devicecode;
+
+        private class Token
+        {
+            public string? AccessToken { get; set; }
+        }
+    
+         private class DeviceVerification
+        {
+            public string? device_code { get; set; }
+            public int expires_in { get; set; }
+            public int interval { get; set; }
+            public string? user_code { get; set; }
+            public string? verification_uri { get; set; }
+        }
+
+        private async Task checkfortoken(){}
+
+        private async Task<string> getRedirectUrl(){
+            string CLIENT_ID = "b03ee56bb0f38ebef184";
+            string ACCESS_TOKEN = "";
+            try
+            {
+                using (HttpClient httpClient = new HttpClient())
+                {
+                    var deviceCodeRequest = new HttpRequestMessage(HttpMethod.Post, $"https://github.com/login/device/code?client_id={CLIENT_ID}&scope=read:user");
+
+                    var deviceCodeResponse = await httpClient.SendAsync(deviceCodeRequest);
+                    deviceCodeResponse.EnsureSuccessStatusCode();
+
+                    string deviceCodeResponseBody = await deviceCodeResponse.Content.ReadAsStringAsync();
+
+                    string[] keyValuePairs = deviceCodeResponseBody.Split('&');
+
+                    Dictionary<string, string> responseDict = new Dictionary<string, string>();
+
+                    foreach (string pair in keyValuePairs)
+                    {
+                        string[] parts = pair.Split('=');
+                        if (parts.Length == 2)
+                        {
+                            string key = parts[0];
+                            string value = WebUtility.UrlDecode(parts[1]);
+                            responseDict[key] = value;
+                        }
+                    }
+
+                    var deviceVerification = new DeviceVerification();
+                    if (responseDict.ContainsKey("device_code"))
+                    {
+                        deviceVerification.device_code = responseDict["device_code"];
+                    }
+                    if (responseDict.ContainsKey("expires_in") && int.TryParse(responseDict["expires_in"], out int expiresIn))
+                    {
+                        deviceVerification.expires_in = expiresIn;
+                    }
+                    if (responseDict.ContainsKey("interval") && int.TryParse(responseDict["interval"], out int interval))
+                    {
+                        deviceVerification.interval = interval;
+                    }
+                    if (responseDict.ContainsKey("user_code"))
+                    {
+                        deviceVerification.user_code = responseDict["user_code"];
+                    }
+                    if (responseDict.ContainsKey("verification_uri"))
+                    {
+                        deviceVerification.verification_uri = responseDict["verification_uri"];
+                    }
+
+                    //Console.WriteLine($"Please go to {deviceVerification.verification_uri} and enter the code: {deviceVerification.user_code}");
+                    devicecode = deviceVerification.user_code;
+                    //verifylink = deviceVerification.verification_uri;
+                    //return $"Please go to {deviceVerification.verification_uri} and enter the code: {deviceVerification.user_code}";
+                    return deviceVerification?.verification_uri?.ToString() ?? "";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Authentication failed: {ex.Message}");
+                return "NOT_FOUND";
+            }            
+        }      
+
+        private async Task<string> getAccessToken(string device_code){
+            string CLIENT_ID = "b03ee56bb0f38ebef184";
+            string ACCESS_TOKEN = "";
+            bool success = false;
+            try
+            {
+                using (HttpClient httpClient = new HttpClient())
+                {            
+                        await Task.Delay(5000);
+
+                        var accessTokenRequest = new HttpRequestMessage(HttpMethod.Post, $"https://github.com/login/oauth/access_token?client_id={CLIENT_ID}&device_code={device_code}&grant_type=urn:ietf:params:oauth:grant-type:device_code");
+
+                        var accessTokenResponse = await httpClient.SendAsync(accessTokenRequest);
+                        accessTokenResponse.EnsureSuccessStatusCode();
+
+                        string accessTokenResponseBody = await accessTokenResponse.Content.ReadAsStringAsync();
+
+                        if (!accessTokenResponseBody.StartsWith("error"))
+                        {
+                            string[] keyValPairs = accessTokenResponseBody.Split('&');
+
+                            Dictionary<string, string> accessTokenDict = new Dictionary<string, string>();
+
+                            foreach (string pair in keyValPairs)
+                            {
+                                string[] parts = pair.Split('=');
+                                if (parts.Length == 2)
+                                {
+                                    string key = parts[0];
+                                    string value = Uri.UnescapeDataString(parts[1]);
+                                    accessTokenDict[key] = value;
+                                }
+                            }
+
+                            if (accessTokenDict.ContainsKey("scope"))
+                            {
+                                string scope = accessTokenDict["scope"];
+                                Console.WriteLine($"Scope: {scope}");
+                            }
+
+                            if (accessTokenDict.ContainsKey("token_type"))
+                            {
+                                string tokenType = accessTokenDict["token_type"];
+                                Console.WriteLine($"Token Type: {tokenType}");
+                            }
+
+                            if (accessTokenDict.ContainsKey("access_token"))
+                            {
+                                string accessToken = accessTokenDict["access_token"];
+                                Console.WriteLine($"Access Token: {accessToken}");
+                                if (!string.IsNullOrEmpty(accessToken))
+                                {
+                                    success = true;
+                                    ACCESS_TOKEN = accessToken;
+                                    tokenfound = accessToken;
+                                    
+                                }
+                            }
+                        }
+                    }
+                
+                
+            }catch (Exception ex)
+            {
+                Console.WriteLine($"Authentication failed: {ex.Message}");
+                
+            }
+            return "ACCESS_TOKEN";
+        }  
+
+        protected override async Task OnInitializedAsync()
+        {
+            Console.WriteLine("Hello, World!");
+
+            string CLIENT_ID = "b03ee56bb0f38ebef184";
+            string ACCESS_TOKEN = "";
+
+            verifylink = await getRedirectUrl();
+        }
+    
+
+}
