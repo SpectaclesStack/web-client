@@ -14,7 +14,7 @@
     bool result = false;
 
     @while(!result){
-        var checkfortoken =  getAccessToken(devicecode);
+        var checkfortoken = getAccessToken(devicecode);
         Console.WriteLine("Printing access token response");
         Console.WriteLine(checkfortoken);
         if(!checkfortoken.Equals("ACCESS_TOKEN")){
