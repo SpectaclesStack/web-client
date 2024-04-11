@@ -2,11 +2,109 @@
 
 <PageTitle >Spectacles Stack</PageTitle>
 
-<h1>Spectacles Stack by Duncan Baloyi</h1>
+<div class="main-container">
+    <div class="question-text">
+        <p>Search Questions</p>
+    </div>
+    <div class="home-content">
+        <div class="search-container">
+            <input @bind="inputValue" />
+            <button @onclick="SearchValue">Search</button>
+        </div>
+        <div class="search-base"></div>
+        <div class="question-answer">
+            <div class="question-box">
+                <div class="icon-box">
+                    icon
+                </div>
+                <div class="title-box">
+                    <div>
+                        title
+                    </div>
+                    <div>
+                        description
+                    </div>
+                </div>
+            </div>
+            <div class="answer-box">
+                <div class="icon-box">
+                    icon
+                </div>
+                <div class="title-box">
+                    <div>
+                        title
+                    </div>
+                    <div>
+                        description
+                    </div>
+                </div>
+            </div>
+        </div>
 
-Welcome to Spectacles Stack for BBD grads, by BBD grads
+            <div class="other-services">
+                Search Result: @SearchResult
+            </div>
+        
+    </div>
+</div>
+
+<style>
+    .main-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        background: #0C1D4F;
+    }
+
+    .question-text {
+        color: #fff;
+    }
+
+    .home-content {
+        background: #fff;
+        border-radius: 5px;
+        padding: 5px;
+    }
+
+    .search-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .search-container input {
+        margin-right: 10px;
+    }
+
+    .question-answer {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .other-services {
+        margin-top: 10px;
+        background-color: #f0f0f0;
+        padding: 10px;
+    }
+</style>
+
+@code {
+    private string inputValue = "Type a question";
+    private string? SearchResult { get; set; }
+
+private void SearchValue()
+{
+    // Perform search operation based on the inputValue
+    // For demonstration, let's just output the search result to the console
+    Console.WriteLine($"Performing search for: {inputValue}");
+
+    // Here you would typically perform your search logic
+    // and assign the result to SearchResult
+    SearchResult = "Search result for: " + inputValue;
+
+    // Notify Blazor that the state has changed so it updates the UI
+    StateHasChanged();
+}
 
 
-
-
-
+}
