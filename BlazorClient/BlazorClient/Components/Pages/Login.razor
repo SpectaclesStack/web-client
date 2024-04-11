@@ -31,7 +31,7 @@ else
 
     protected override async Task OnInitializedAsync(){
         string CLIENT_ID = "cddf9a8bc7feeff74c35";
-        string redirectUri = "http://3.250.62.135:5069/login";
+        string redirectUri = "http://localhost:5069/login";
         githuburl = $"https://github.com/login/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={redirectUri}";
 
         var uri = new Uri(NavigationManager.Uri);
@@ -62,7 +62,8 @@ else
                         Console.WriteLine(accessTokenResponse);
                         authorization = true;
                 }
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine($"Authentication failed: {ex.Message}");
                 

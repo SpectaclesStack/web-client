@@ -1,64 +1,67 @@
 @page "/questions"
 @attribute [StreamRendering]
+@using System.Text.Json;
+@using System.Text
+@using BlazorClient.Model;
+@inject NavigationManager NavManager
+@using System.Net.Http;
 
-<PageTitle>Questions</PageTitle>
+<PageTitle>Ask a Question</PageTitle>
 
-<h1>Questions</h1>
+<h1 class="question-header">Ask a question</h1>
 
-<p>This component demonstrates showing data.</p>
+<style>
+    .question-header {
+        color: #fff;
+        text-align: center;
+    }
 
-@if (forecasts == null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Temp. (C)</th>
-                <th>Temp. (F)</th>
-                <th>Summary</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var forecast in forecasts)
-            {
-                <tr>
-                    <td>@forecast.Date.ToShortDateString()</td>
-                    <td>@forecast.TemperatureC</td>
-                    <td>@forecast.TemperatureF</td>
-                    <td>@forecast.Summary</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+    .question-title {
+        color: #fff;
+    }
+
+    .question-body {
+        color: #fff;
+    }
+
+    .form-group {
+        margin-bottom: 20px; /* Adjust as needed */
+    }
+
+</style>
+
+<EditForm Model="@question" OnSubmit=@FormSubmitted FormName="questionForm">
+    <DataAnnotationsValidator />
+    <div class="form-group">
+        <label class="question-title" for="Title">Title: </label>
+        <InputText class="form-control" id="Title" @bind-Value="question.Title"></InputText>
+    </div>
+    <div class="form-group">
+        <label class="question-body" for="Body">Body: </label>
+        <InputText class="form-control" id="Body" @bind-Value="question.Body"></InputText>
+    </div>
+    <div class="form-group">
+        <input type="submit" class="btn btn-primary" value="Save" />
+    </div>
+</EditForm>
 
 @code {
-    private WeatherForecast[]? forecasts;
+    Question question = new Question();
 
-    protected override async Task OnInitializedAsync()
+    string ? LastSubmitResult;
+
+    void FormSubmitted(EditContext editContext)
     {
-        // Simulate asynchronous loading to demonstrate streaming rendering
-        await Task.Delay(500);
-
-        var startDate = DateOnly.FromDateTime(DateTime.Now);
-        var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
-        forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+        HttpClient client = new HttpClient();
+        question.userid = 46;
+        question.CreateAt = DateTime.Now;
+        string jsonQuestion = JsonSerializer.Serialize(question);
+        var request = client.PostAsync("http://3.250.62.135:5033/api/Questions", new StringContent(jsonQuestion, Encoding.UTF8, "application/json"));
+        if (request.Result.IsSuccessStatusCode)
         {
-            Date = startDate.AddDays(index),
-            TemperatureC = Random.Shared.Next(-20, 55),
-            Summary = summaries[Random.Shared.Next(summaries.Length)]
-        }).ToArray();
+            NavManager.NavigateTo("/");
+        }
+        NavManager.NavigateTo("/");
     }
+}}
 
-    private class WeatherForecast
-    {
-        public DateOnly Date { get; set; }
-        public int TemperatureC { get; set; }
-        public string? Summary { get; set; }
-        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-    }
-}
