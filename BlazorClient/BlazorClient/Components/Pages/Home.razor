@@ -1,4 +1,6 @@
 ﻿@page "/"
+@using System.Text.Json
+@rendermode InteractiveServer
 
 <PageTitle>Home</PageTitle>
 
@@ -92,15 +94,49 @@
     private string inputValue = "Type a question";
     private string? SearchResult { get; set; }
 
-private void SearchValue()
+    private string? result {get; set;}
+
+    private async Task<string> getQuestions(){
+        string apiUrl = $"http://3.250.62.135:5033/api/Users";
+
+        //string result = "Empty";
+
+        using (HttpClient client = new HttpClient())
+        {
+
+            HttpResponseMessage response = await client.GetAsync(apiUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string responseBody = await response.Content.ReadAsStringAsync();
+                var jsonDocument = JsonDocument.Parse(responseBody);
+                var data = jsonDocument.RootElement;
+                //string login = data.GetProperty("login").GetString() ?? "";
+                result = responseBody;
+            }
+            
+        }  
+
+        if(result == null){
+            return "NOT_FOUND";
+        }else{
+            return result;
+        }
+
+    }
+
+private async void SearchValue()
 {
     // Perform search operation based on the inputValue
     // For demonstration, let's just output the search result to the console
     Console.WriteLine($"Performing search for: {inputValue}");
-
+    await getQuestions();
     // Here you would typically perform your search logic
     // and assign the result to SearchResult
-    SearchResult = "Search result for: " + inputValue;
+    SearchResult = "Search result for: " + result;
+
+
+    
 
     // Notify Blazor that the state has changed so it updates the UI
     StateHasChanged();
