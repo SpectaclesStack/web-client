@@ -1,4 +1,5 @@
 @page "/questions"
+@rendermode InteractiveServer
 @attribute [StreamRendering]
 @using System.Text.Json;
 @using System.Text
@@ -9,6 +10,18 @@
 <PageTitle>Ask a Question</PageTitle>
 
 <h1 class="question-header">Ask a question</h1>
+
+<div class="post-question-container">
+    <div class="title-container">
+        <label class="question-title">Title: </label>
+        <input @bind="questionTitle"/>
+    </div>
+    <div class="body-container">
+        <label class="question-body">Body: </label>
+        <input @bind="questionBody"/>
+    </div>
+    <button @onclick="postQuestion">Ask Question</button>
+</div>
 
 <style>
     .question-header {
@@ -28,25 +41,50 @@
         margin-bottom: 20px; /* Adjust as needed */
     }
 
-</style>
+    .post-question-container {
+        max-width: 600px;
+        margin-top: 2rem;
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+    }
 
-<EditForm Model="@question" OnSubmit=@FormSubmitted FormName="questionForm">
-    <DataAnnotationsValidator />
-    <div class="form-group">
-        <label class="question-title" for="Title">Title: </label>
-        <InputText class="form-control" id="Title" @bind-Value="question.Title"></InputText>
-    </div>
-    <div class="form-group">
-        <label class="question-body" for="Body">Body: </label>
-        <InputText class="form-control" id="Body" @bind-Value="question.Body"></InputText>
-    </div>
-    <div class="form-group">
-        <input type="submit" class="btn btn-primary" value="Save" />
-    </div>
-</EditForm>
+    .title-container,
+    .body-container {
+        margin-bottom: 20px;
+    }
+
+    input {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    button {
+        display: block;
+        width: 50%;
+        padding: 10px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+
+</style>
 
 @code {
     Question question = new Question();
+    private string? questionTitle = "";
+    private string? questionBody = "";
 
     public class Question
     {
@@ -61,11 +99,13 @@
 
     string ? LastSubmitResult;
 
-    void FormSubmitted(EditContext editContext)
+    private void postQuestion()
     {
         HttpClient client = new HttpClient();
         question.userid = 46;
         question.CreateAt = DateTime.Now;
+        question.Title = questionTitle;
+        question.Body = questionBody;
         string jsonQuestion = JsonSerializer.Serialize(question);
         var request = client.PostAsync("http://3.250.62.135:5033/api/Questions", new StringContent(jsonQuestion, Encoding.UTF8, "application/json"));
         if (request.Result.IsSuccessStatusCode)
