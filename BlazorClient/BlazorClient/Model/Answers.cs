@@ -5,10 +5,10 @@ namespace BlazorClient.Model
     public class Answers
     {
         public int AnswerId { get; set; }
-        public required Questions Questions { get; set; }
-        public required Users Users { get; set; }
-        public required DateTime CreateAt { get; set; }
-        public required string Answer {  get; set; }
+        public int QuestionId { get; set; }
+        public int UserId { get; set; }
+        public DateTime ? CreateAt { get; set; }
+        public string ? Answer {  get; set; }
 
     }
 }
