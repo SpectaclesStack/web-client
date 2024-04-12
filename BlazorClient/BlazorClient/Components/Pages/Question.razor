@@ -3,6 +3,7 @@
 @using System.Text.Json.Serialization
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
+@inject NavigationManager NavManager
 
 <PageTitle>Spectacles Stack</PageTitle>
 
@@ -42,7 +43,7 @@
             }
         </div>
         <div class="linedivision"></div>
-        <a class="answerpagelink" href="@answerpage" target="_self">Add Answer</a>
+        <a class="answerpagelink" href="@answerpage" target="_self" @onclick="addAnswer">Add Answer</a>
     </div>
     
 </div>
@@ -194,6 +195,7 @@
         public required string answer { get; set; }
     }
 
+    int qid;
 
     private async Task<string> GetQuestion()
     {
@@ -204,6 +206,7 @@
         {
             var queryParams = System.Web.HttpUtility.ParseQueryString(queryParam);
             question_id = queryParams["question_id"];
+            qid = Convert.ToInt32(question_id);
             answerpage = $"answer?question_id={question_id}";
         }
 
@@ -247,6 +250,13 @@
     protected override async Task OnInitializedAsync()
     {
         var requestquestion = await GetQuestion();
+    }
+
+    private void addAnswer()
+    {
+
+        //uriHelper.NavigateTo($"/answer/{qid}");
+        NavManager.NavigateTo($"/answer?qid={qid}"); // Using query string
     }
 
 }
