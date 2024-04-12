@@ -4,6 +4,7 @@
 @using System.Text
 @using System.Text.Json.Serialization
 @using BlazorClient.Services
+@using System.Net
 @attribute [StreamRendering]
 @inject NavigationManager NavigationManager
 @inject IIdService IdService
@@ -91,43 +92,55 @@ else
                     string accessTokenResponseBody = await accessTokenResponse.Content.ReadAsStringAsync();
 
                     NameValueCollection queryParameters = System.Web.HttpUtility.ParseQueryString(accessTokenResponseBody);
-                    
-
-                    
-                    using (HttpClient client = new HttpClient())
-                    {
-                    
-                    IdService.SetAccessToken(queryParameters["access_token"]);
-                    client.DefaultRequestHeaders.Add("User-Agent", "C# HttpClient");
-                    client.DefaultRequestHeaders.Add("Authorization", "Bearer " + queryParameters["access_token"]); 
-                    UserData userData = new UserData
-                    {
-                        UserId = 0,
-                        UserName = "",
-                        DateCreated = DateTime.UtcNow 
-                    };         
-
-                    string jsonContent = JsonSerializer.Serialize(userData);   
-                        HttpContent content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                        HttpResponseMessage response = await client.PostAsync("http://3.250.62.135:5033/api/Users",content);
-
-                        if (response.IsSuccessStatusCode)
+                        string acctk = queryParameters["access_token"];
+                        using (HttpClient Client = new HttpClient())
                         {
-                            string responseBody = await response.Content.ReadAsStringAsync();
+                            HttpRequestMessage request = new HttpRequestMessage(
+                                HttpMethod.Post, 
+                                "http://3.250.62.135:5033/api/users"
+                                );
+                            request.Headers.Add("Authorization", acctk);
 
-                            globaluser = JsonSerializer.Deserialize<UserData>(responseBody);
+                            UserData user = new UserData
+                            {
+                                UserId = 0,
+                                UserName = "",
+                                DateCreated = DateTime.UtcNow 
+                            };  
 
-                            userid = globaluser.UserId.ToString();
+                            user.UserName = IdService.GetUsername();
+                            user.DateCreated = DateTime.UtcNow;
+
+                            string jsonBody = JsonSerializer.Serialize(user, new JsonSerializerOptions
+                            {
+                                WriteIndented = false,
+                                IgnoreNullValues = false
+                            });
+
+                            request.Content = new StringContent(jsonBody.ToString(), Encoding.UTF8, "application/json");
+
+
+                            HttpResponseMessage response = httpClient.Send(request);
+                            if (response.StatusCode.Equals(HttpStatusCode.OK))
+                            {
+                                var responseUser = JsonSerializer.Deserialize<UserData>(response.Content.ReadAsStringAsync().Result);
+                            userid = responseUser.UserId.ToString();
 
                             Console.WriteLine("Printing user id");
                             Console.WriteLine(userid);
 
                             if(!string.IsNullOrEmpty(userid)){
                             IdService.SetId(userid);
-                            IdService.SetUsername(globaluser.UserName);
+                            IdService.SetUsername(responseUser.UserName);
                             NavManager.NavigateTo("/");
-                            }                        
+                            }
+                            else
+                            {
+                                Console.WriteLine(response);
+                                throw new Exception("Failed to login.");
+                            }
                         }
+                    
 
                     }                                       
 
