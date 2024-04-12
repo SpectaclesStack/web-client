@@ -133,6 +133,7 @@ else
                             if(!string.IsNullOrEmpty(userid)){
                             IdService.SetId(userid);
                             IdService.SetUsername(responseUser.UserName);
+                            authorization = true;
                             NavManager.NavigateTo("/");
                             }
                             else
@@ -145,7 +146,7 @@ else
 
                     }                                       
 
-                        authorization = true;
+                        
                 }
             }
             catch (Exception ex)
