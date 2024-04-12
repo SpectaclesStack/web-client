@@ -188,6 +188,12 @@
         answer.CreateAt = DateTime.Now;
         answer.answer = answerBody;
         string jsonAnswer = JsonSerializer.Serialize(answer);
+
+        string acc = IdService.GetAccessToken();
+
+        client.DefaultRequestHeaders.Add("User-Agent", "C# HttpClient");
+        client.DefaultRequestHeaders.Add("Authorization", "Bearer " + acc);         
+
         var request = await client.PostAsync("http://3.250.62.135:5033/api/Answers", new StringContent(jsonAnswer, Encoding.UTF8, "application/json"));
         //HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Post, );
         //message.

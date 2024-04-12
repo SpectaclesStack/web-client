@@ -96,6 +96,8 @@ else
                     
                     using (HttpClient client = new HttpClient())
                     {
+                    
+                    IdService.SetAccessToken(queryParameters["access_token"]);
                     client.DefaultRequestHeaders.Add("User-Agent", "C# HttpClient");
                     client.DefaultRequestHeaders.Add("Authorization", "Bearer " + queryParameters["access_token"]); 
                     UserData userData = new UserData
@@ -122,6 +124,7 @@ else
 
                             if(!string.IsNullOrEmpty(userid)){
                             IdService.SetId(userid);
+                            IdService.SetUsername(globaluser.UserName);
                             NavManager.NavigateTo("/");
                             }                        
                         }

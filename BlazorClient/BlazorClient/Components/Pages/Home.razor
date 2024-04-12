@@ -1,7 +1,9 @@
 ﻿@page "/"
 @using System.Text.Json
 @using System.Text.Json.Serialization
+@using BlazorClient.Services
 @rendermode InteractiveServer
+@inject IIdService IdService
 
 <PageTitle>Spectacles Stack</PageTitle>
 
@@ -11,6 +13,7 @@
         <p>Questions</p>
     </div>
     <div class="home-content">
+        <p>Welcome @userNamy</p>
         <div class="search-container">
             <input @bind="inputValue" />
             <button @onclick="SearchValue">Search</button>
@@ -165,6 +168,8 @@
         public int Userid { get; set; }
     }
 
+    private string? userNamy;
+
     private async Task<string> GetQuestions()
     {
         string apiUrl = "http://3.250.62.135:5033/api/Questions";
@@ -196,7 +201,12 @@
         }
 
         return result ?? "NOT_FOUND";
-    }
+    } 
+
+    protected override async Task OnInitializedAsync(){
+        userNamy = IdService.GetUsername();
+        var stro = await GetQuestions();
+    }    
 
     private async void SearchValue()
     {

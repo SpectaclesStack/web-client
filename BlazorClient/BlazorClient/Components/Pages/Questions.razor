@@ -110,6 +110,12 @@
         question.Title = questionTitle;
         question.Body = questionBody;
         string jsonQuestion = JsonSerializer.Serialize(question);
+        
+        string acc = IdService.GetAccessToken();
+
+        client.DefaultRequestHeaders.Add("User-Agent", "C# HttpClient");
+        client.DefaultRequestHeaders.Add("Authorization", "Bearer " + acc);  
+
         var request = client.PostAsync("http://3.250.62.135:5033/api/Questions", new StringContent(jsonQuestion, Encoding.UTF8, "application/json"));
         if (request.Result.IsSuccessStatusCode)
         {
