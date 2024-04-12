@@ -1,6 +1,13 @@
 @page "/login"
+@using System.Text.Json
+@using System.Collections.Specialized
+@using System.Text
+@using System.Text.Json.Serialization
+@using BlazorClient.Services
 @attribute [StreamRendering]
 @inject NavigationManager NavigationManager
+@inject IIdService IdService
+@inject NavigationManager NavManager
 
 <PageTitle>Questions</PageTitle>
 
@@ -21,6 +28,16 @@ else
     }
 }
 
+<style>
+    p {
+        color: #fff;
+    }
+
+    h1 {
+        color: #fff;
+    }
+</style>
+
 @code {
     private string? githuburl;
     private string? QueryParamValue;
@@ -28,11 +45,27 @@ else
     private string? client_secret;
     private bool authorization = false;
 
+    public string? userid;
+
+    public class UserData
+    {
+        [JsonPropertyName("userId")]
+        public int UserId { get; set; }
+
+        [JsonPropertyName("userName")]
+        public string? UserName { get; set; }
+
+        [JsonPropertyName("dateCreated")]
+        public DateTime DateCreated { get; set; }
+    }    
+
+    public UserData? globaluser;
+
     protected override async Task OnInitializedAsync(){
         string CLIENT_ID = "cddf9a8bc7feeff74c35";
         string redirectUri = "http://localhost:5069/login";
         githuburl = $"https://github.com/login/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={redirectUri}";
-
+        client_secret = "dca78aa6298440c0f0d50542bbe5c1561171217f";
         var uri = new Uri(NavigationManager.Uri);
         var queryParam = uri.Query;
         if (!string.IsNullOrEmpty(queryParam))
@@ -48,17 +81,55 @@ else
             {
                 using (HttpClient httpClient = new HttpClient())
                 {            
-                        await Task.Delay(5000);
+                    await Task.Delay(5000);
 
-                        var accessTokenRequest = new HttpRequestMessage(HttpMethod.Post, $"https://github.com/login/oauth/access_token?client_id={CLIENT_ID}&client_secret={client_secret}&code={authCode}");
+                    var accessTokenRequest = new HttpRequestMessage(HttpMethod.Post, $"https://github.com/login/oauth/access_token?client_id={CLIENT_ID}&client_secret={client_secret}&code={authCode}");
 
-                        var accessTokenResponse = await httpClient.SendAsync(accessTokenRequest);
-                        accessTokenResponse.EnsureSuccessStatusCode();
+                    var accessTokenResponse = await httpClient.SendAsync(accessTokenRequest);
+                    accessTokenResponse.EnsureSuccessStatusCode();
 
-                        string accessTokenResponseBody = await accessTokenResponse.Content.ReadAsStringAsync();
+                    string accessTokenResponseBody = await accessTokenResponse.Content.ReadAsStringAsync();
 
-                        Console.WriteLine("Printing the accesstoken");
-                        Console.WriteLine(accessTokenResponse);
+                    NameValueCollection queryParameters = System.Web.HttpUtility.ParseQueryString(accessTokenResponseBody);
+                    
+
+                    
+                    using (HttpClient client = new HttpClient())
+                    {
+                    client.DefaultRequestHeaders.Add("User-Agent", "C# HttpClient");
+                    client.DefaultRequestHeaders.Add("Authorization", "Bearer " + queryParameters["access_token"]); 
+                    UserData userData = new UserData
+                    {
+                        UserId = 0,
+                        UserName = "",
+                        DateCreated = DateTime.UtcNow 
+                    };         
+
+                    string jsonContent = JsonSerializer.Serialize(userData);   
+                        HttpContent content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                        HttpResponseMessage response = await client.PostAsync("http://3.250.62.135:5033/api/Users",content);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            string responseBody = await response.Content.ReadAsStringAsync();
+
+                            globaluser = JsonSerializer.Deserialize<UserData>(responseBody);
+
+                            userid = globaluser.UserId.ToString();
+
+                            Console.WriteLine("Printing user id");
+                            Console.WriteLine(userid);
+
+                            if(!string.IsNullOrEmpty(userid)){
+                            IdService.SetId(userid);
+                            NavManager.NavigateTo("/");
+                            }                        
+                        }
+
+                    }                                       
+
+
+
                         authorization = true;
                 }
             }
@@ -68,6 +139,8 @@ else
                 
             }   
         }
+
+
         
     }
 

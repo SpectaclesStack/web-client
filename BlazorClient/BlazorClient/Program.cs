@@ -1,5 +1,6 @@
 using BlazorClient.Client.Pages;
 using BlazorClient.Components;
+using BlazorClient.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
+
+builder.Services.AddScoped<IIdService, IdService>();
 
 var app = builder.Build();
 

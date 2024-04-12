@@ -6,6 +6,8 @@
 @using BlazorClient.Model;
 @inject NavigationManager NavManager
 @using System.Net.Http;
+@using BlazorClient.Services
+@inject IIdService IdService
 
 <PageTitle>Ask a Question</PageTitle>
 
@@ -101,8 +103,9 @@
 
     private void postQuestion()
     {
+        if(!string.IsNullOrEmpty(IdService.GetId())){
         HttpClient client = new HttpClient();
-        question.userid = 46;
+        question.userid = Convert.ToInt32(IdService.GetId());
         question.CreateAt = DateTime.Now;
         question.Title = questionTitle;
         question.Body = questionBody;
@@ -113,6 +116,10 @@
             NavManager.NavigateTo("/");
         }
         NavManager.NavigateTo("/");
+        }else{
+           NavManager.NavigateTo("/login"); 
+        }
+
     }
 }
 
