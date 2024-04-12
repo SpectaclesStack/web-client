@@ -24,7 +24,7 @@
 <div class="post-answer-container">
     <div class="title-container">
         <label class="question-title">Title: </label>
-        <div class="title">@question.Title</div>
+        <div class="title">@questionTitle</div>
     </div>
     <div class="body-container">
         <label class="answer-body">Body: </label>
@@ -114,9 +114,6 @@
 
     public class Answers
     {
-        [JsonPropertyName("answerid")]
-        public int AnswerId { get; set; }
-
         [JsonPropertyName("questionid")]
         public int questionid { get; set; }
 
@@ -177,9 +174,10 @@
             string responseBody = await response.Content.ReadAsStringAsync();
             question = JsonSerializer.Deserialize<Question>(responseBody);
         }
+        questionTitle = question.Title;
     }
 
-    private void postAnswer()
+    private async void postAnswer()
     {
         HttpClient client = new HttpClient();
         answer.questionid = qid;
@@ -187,8 +185,11 @@
         answer.CreateAt = DateTime.Now;
         answer.answer = answerBody;
         string jsonAnswer = JsonSerializer.Serialize(answer);
-        var request = client.PostAsync("http://3.250.62.135:5033/api/Answer", new StringContent(jsonAnswer, Encoding.UTF8, "application/json"));
-        if (request.Result.IsSuccessStatusCode)
+        var request = await client.PostAsync("http://3.250.62.135:5033/api/Answers", new StringContent(jsonAnswer, Encoding.UTF8, "application/json"));
+        //HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Post, );
+        //message.
+        //var request = client.SendAsync();
+        if (request.IsSuccessStatusCode)
         {
             NavManager.NavigateTo("/");
         }
