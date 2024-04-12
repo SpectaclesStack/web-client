@@ -1,0 +1,197 @@
+﻿@page "/answer"
+@using System.Text.Json
+@attribute [StreamRendering]
+@using System.Text.Json.Serialization
+@using System.Text
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@inject NavigationManager NavManager
+
+<h3>Answer</h3>
+<h3>Question</h3>
+<div class="question-answer">
+    <div class="question-box">
+        <div class="title-box">
+            <div class="title">@question.Title</div>
+            <div class="date">Date Posted: @question.CreateAt.ToShortDateString()</div>
+        </div>
+        <div class="description-box">
+            <div class="body">@question.Body</div>
+        </div>
+    </div>
+</div>
+
+<div class="post-answer-container">
+    <div class="title-container">
+        <label class="question-title">Title: </label>
+        <div class="title">@question.Title</div>
+    </div>
+    <div class="body-container">
+        <label class="answer-body">Body: </label>
+        <input @bind="answerBody" />
+    </div>
+    <button @onclick="postAnswer">Answer question</button>
+</div>
+
+
+<style>
+    .question-header {
+        color: #fff;
+        text-align: center;
+    }
+
+    .answer-body {
+        color: #fff;
+    }
+
+    .post-answer-container {
+        max-width: 600px;
+        margin-top: 2rem;
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+    }
+
+    .title-container,
+    .body-container {
+        margin-bottom: 20px;
+    }
+
+    input {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    button {
+        display: block;
+        width: 50%;
+        padding: 10px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+
+    .title-box {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .title {
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    .date {
+        font-size: 14px;
+        color: #fff;
+    }
+
+    .description-box {
+        font-size: 16px;
+        color: #333;
+    }
+
+</style>
+
+@code {
+
+    Answers answer = new Answers();
+    private string? questionTitle = "";
+    private string? answerBody = "";
+
+    public class Answers
+    {
+        [JsonPropertyName("answerid")]
+        public int AnswerId { get; set; }
+
+        [JsonPropertyName("questionid")]
+        public int questionid { get; set; }
+
+        [JsonPropertyName("userid")]
+        public int userid { get; set; }
+
+        [JsonPropertyName("createAt")]
+        public DateTime CreateAt { get; set; }
+
+        [JsonPropertyName("answer")]
+        public string ? answer { get; set; }
+    }
+
+    Question question = new Question();
+
+    public class Question
+    {
+        [JsonPropertyName("questionId")]
+        public int QuestionId { get; set; }
+
+        [JsonPropertyName("title")]
+        public string? Title { get; set; }
+
+        [JsonPropertyName("body")]
+        public string? Body { get; set; }
+
+        [JsonPropertyName("createAt")]
+        public DateTime CreateAt { get; set; }
+
+        [JsonPropertyName("userid")]
+        public int Userid { get; set; }
+    }
+
+    //[Parameter]
+    private int qid; // Define qid here
+
+    protected override async void OnInitialized()
+    {
+        // Parse query string parameter qid
+        var uri = new Uri(NavigationManager.Uri);
+        var query = uri.Query;
+        if (!string.IsNullOrEmpty(query))
+        {
+            var queryString = System.Web.HttpUtility.ParseQueryString(query);
+            if (queryString.AllKeys.Contains("qid"))
+            {
+                qid = int.Parse(queryString["qid"]);
+            }
+        }
+
+        string apiUrl = $"http://3.250.62.135:5033/api/Questions/{qid}";
+
+        HttpClient client = new HttpClient();
+
+        HttpResponseMessage response = await client.GetAsync(apiUrl);
+        if (response.IsSuccessStatusCode)
+        {
+            string responseBody = await response.Content.ReadAsStringAsync();
+            question = JsonSerializer.Deserialize<Question>(responseBody);
+        }
+    }
+
+    private void postAnswer()
+    {
+        HttpClient client = new HttpClient();
+        answer.questionid = qid;
+        answer.userid = question.Userid;
+        answer.CreateAt = DateTime.Now;
+        answer.answer = answerBody;
+        string jsonAnswer = JsonSerializer.Serialize(answer);
+        var request = client.PostAsync("http://3.250.62.135:5033/api/Answer", new StringContent(jsonAnswer, Encoding.UTF8, "application/json"));
+        if (request.Result.IsSuccessStatusCode)
+        {
+            NavManager.NavigateTo("/");
+        }
+        NavManager.NavigateTo("/");
+    }
+}
