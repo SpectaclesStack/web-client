@@ -3,9 +3,11 @@
 @attribute [StreamRendering]
 @using System.Text.Json.Serialization
 @using System.Text
+@using BlazorClient.Services
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
 @inject NavigationManager NavManager
+@inject IIdService IdService
 
 <h3>Answer</h3>
 <h3>Question</h3>
@@ -179,12 +181,19 @@
 
     private async void postAnswer()
     {
+        if(!string.IsNullOrEmpty(IdService.GetId())){
         HttpClient client = new HttpClient();
         answer.questionid = qid;
-        answer.userid = question.Userid;
+        answer.userid = Convert.ToInt32(IdService.GetId());
         answer.CreateAt = DateTime.Now;
         answer.answer = answerBody;
         string jsonAnswer = JsonSerializer.Serialize(answer);
+
+        string acc = IdService.GetAccessToken();
+
+        client.DefaultRequestHeaders.Add("User-Agent", "C# HttpClient");
+        client.DefaultRequestHeaders.Add("Authorization", "Bearer " + acc);         
+
         var request = await client.PostAsync("http://3.250.62.135:5033/api/Answers", new StringContent(jsonAnswer, Encoding.UTF8, "application/json"));
         //HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Post, );
         //message.
@@ -193,7 +202,11 @@
         {
             NavManager.NavigateTo("/");
         }
-        //NavManager.NavigateTo("/");
-        // error message
+        NavManager.NavigateTo("/");
+        }else{
+            NavManager.NavigateTo("/login");
+        }
+
+
     }
 }
