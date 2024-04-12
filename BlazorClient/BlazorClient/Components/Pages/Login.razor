@@ -92,7 +92,8 @@ else
                     string accessTokenResponseBody = await accessTokenResponse.Content.ReadAsStringAsync();
 
                     NameValueCollection queryParameters = System.Web.HttpUtility.ParseQueryString(accessTokenResponseBody);
-                        string acctk = queryParameters["access_token"];
+                        string acctk = $"Bearer {queryParameters["access_token"]}";
+
                         using (HttpClient Client = new HttpClient())
                         {
                             HttpRequestMessage request = new HttpRequestMessage(
